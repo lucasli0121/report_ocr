@@ -1,0 +1,10 @@
+{
+    "python.testing.pytestArgs": [
+        "dialogs"
+    ],
+    "python.testing.unittestEnabled": false,
+    "python.testing.pytestEnabled": true,
+    "remote.autoForwardPortsFallback": 0,
+    "python-envs.defaultEnvManager": "ms-python.python:system",
+    "python-envs.pythonProjects": []
+}

@@ -1,0 +1,29 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "process",
+			"label": "docker-build",
+			"command": "docker",
+			"args": [
+				"build",
+				"-t",
+				"smartschoolweb:latest",
+				"-f",
+				"${workspaceFolder}/Dockerfile",
+				"${workspaceFolder}"
+			]
+		},
+		{
+			"type": "process",
+			"label": "docker-run: debug",
+			"command": "run",
+			"dependsOn": [
+				"docker-build"
+			],
+			"python": {
+				"file": "main.py"
+			}
+		}
+	]
+}
