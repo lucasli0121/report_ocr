@@ -14,6 +14,7 @@ from bson.objectid import ObjectId
 from dao.company_dao import CompanyDao
 from dao.company_bank_account_dao import CompanyBankAccountDao
 from db.mongo.mongo_impl import MongoImpl
+import re
 
 class MongoCompanyImpl():
     def __init__(self, mongo_impl: MongoImpl):
@@ -53,8 +54,13 @@ class MongoCompanyImpl():
             self.logger.error("Company table not found in MongoDB.")
             return False, None
         query: dict[str, Any] = {}
-        query['name'] = {'$regex': name, '$options': 'i'}
-        query['brief_name'] = {'$regex': brief_name, '$options': 'i'}
+        name = re.escape(name)
+        query['$or'] = [
+            {'name': {'$regex': name, '$options': 'i'}},
+            {'brief_name': {'$regex': name, '$options': 'i'}}
+        ]
+        # query['name'] = {'$regex': name, '$options': 'i'}
+        # query['brief_name'] = {'$regex': brief_name, '$options': 'i'}
         return self.mongo_impl.query_by_condition(tbl_name, query, None)
         
     """ 
@@ -82,6 +88,7 @@ class MongoCompanyImpl():
             return False, None
         query: dict[str, Any] = {}
         if name or len(name) > 0:
+            name = re.escape(name)
             query['$or'] = [
                 {'name': {'$regex': name, '$options': 'i'}},
                 {'brief_name': {'$regex': name, '$options': 'i'}}
@@ -110,8 +117,13 @@ class MongoCompanyImpl():
             return False, None
         condition: dict[str, Any] = {}
         if name or len(name) > 0:
-            condition['name'] = {'$regex': name, '$options': 'i'}
-            condition['brief_name'] = {'$regex': name, '$options': 'i'}
+            name = re.escape(name)
+            condition['$or'] = [
+                {'name': {'$regex': name, '$options': 'i'}},
+                {'brief_name': {'$regex': name, '$options': 'i'}}
+            ]
+            # condition['name'] = {'$regex': name, '$options': 'i'}
+            # condition['brief_name'] = {'$regex': name, '$options': 'i'}
         if address or len(address) > 0:
             condition['address'] = {'$regex': address, '$options': 'i'}
         if contacts or len(contacts) > 0:
