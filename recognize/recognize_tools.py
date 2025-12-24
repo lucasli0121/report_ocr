@@ -119,7 +119,15 @@ def extract_invoice_fields(texts: list, scores, boxes: list):
             y = boxes[idx][0][1] + 10 # 向下偏移 10
             for j, b in enumerate(boxes):
                 if b[0][0] >= x and b[0][0] <= (x + 100) and b[0][1] >= y and b[0][1] <= (y + 30):
-                    result["数量"] = float(texts[j].replace(' ', '').replace(',', '.'))
+                    value = texts[j].replace(',', '.')
+                    number_list = value.split(' ')
+                    number_str = '0'
+                    if len(number_list) > 0:
+                        number_str = number_list[0]
+                    if len(number_list) > 1:
+                        price_str = number_list[1]
+                        result["单价"] = float(price_str)
+                    result["数量"] = float(number_str)
                     break
         match = re.search(r"单价", t)
         if match:

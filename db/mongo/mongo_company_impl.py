@@ -54,11 +54,12 @@ class MongoCompanyImpl():
             self.logger.error("Company table not found in MongoDB.")
             return False, None
         query: dict[str, Any] = {}
-        name = re.escape(name)
-        query['$or'] = [
-            {'name': {'$regex': name, '$options': 'i'}},
-            {'brief_name': {'$regex': name, '$options': 'i'}}
-        ]
+        if name and len(name) > 0:
+            name = re.escape(name)
+            query['name'] = {'$regex': name, '$options': 'i'}
+        if brief_name and len(brief_name) > 0:
+            brief_name = re.escape(brief_name)
+            query['brief_name'] = {'$regex': brief_name, '$options': 'i'}
         # query['name'] = {'$regex': name, '$options': 'i'}
         # query['brief_name'] = {'$regex': brief_name, '$options': 'i'}
         return self.mongo_impl.query_by_condition(tbl_name, query, None)
