@@ -47,6 +47,7 @@ def extract_invoice_fields(texts: list, scores, boxes: list):
         "数量": 0,
         "单价": 0,
         "税率": 0,
+        "发票类型": 1,
         "发票号码": '',
         "开票日期": '',
         "红字发票": False,
@@ -289,12 +290,18 @@ def extract_certificate_fields(texts: list, scores, boxes: list) -> dict:
 
         match = re.search(r"税务机关", t)
         if match:
-            x = boxes[idx][0][0] + 100
-            y = boxes[idx][0][1] - 5
+            x = boxes[idx][0][0]
+            y = boxes[idx][0][1] - 20
             for j, b in enumerate(boxes):
                 if b[0][0] >= x and b[0][0] < (x + 200) and b[0][1] >= y and b[0][1] <= (y + 30):
-                    result["税务机关"] = texts[j]
-                    break
+                    if result["税务机关"] == '':
+                        result["税务机关"] = texts[j].split('：')[-1]
+                        y = b[0][1] + 10  # 继续向下偏移 10
+                        if y > boxes[idx][0][1] + 10:
+                            break
+                    else:
+                        result["税务机关"] = result["税务机关"] + texts[j].split('：')[-1]
+                        break
         match = re.search(r"纳税人识别号", t)
         if match:
             x = boxes[idx][0][0] + 100
