@@ -55,10 +55,14 @@ def parse_certificate_result_to_dao(results: list) -> CertificateRecognizeResult
     return CertificateRecognizeResult(result=0, msg='识别成功', data=dao_list)
 
 def save_certificate_daos(dao_list: list[TaxApprovalDao]) -> CertificateRecognizeResult:
+    if dao_list is None or len(dao_list) == 0:
+        return CertificateRecognizeResult(result=-1, msg='没有可保存的数据', data=None)
+    # dao_list中的每个元素都代表一个税务批准文件，凭证号应该相同，因此只需要检查第一个元素的凭证号是否已经存在即可
+    first_dao = dao_list[0]
+    res, value = g.my_db.query_tax_approval_by_no(first_dao.approval_no)
+    if res and value is not None:
+        return CertificateRecognizeResult(result=-1, msg=f'完税证明重复添加，凭证号：{first_dao.approval_no}', data=None)
     for dao in dao_list:
-        res, value = g.my_db.query_tax_approval_by_no(dao.approval_no)
-        if res and value is not None:
-            return CertificateRecognizeResult(result=-1, msg=f'完税证明重复添加，凭证号：{dao.approval_no}', data=None)
         res, msg = g.my_db.add_tax_approval(dao.to_db())
         if not res:
             return CertificateRecognizeResult(result=-1, msg=f'保存税务批准文件失败: {msg}', data=None)
