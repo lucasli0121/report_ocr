@@ -400,12 +400,23 @@ def extract_certificate_fields(texts: list, scores, boxes: list) -> dict:
         match = re.search(r"金额合计", t)
         if match:
             total_money_y = boxes[idx][0][1] - 50
-        match = re.search(r"[￥¥](\d+\s*\.\d{1,2})", t)
-        if match:
-            if total_money_y == 0:
-                total_money_y = 1150
-            if boxes[idx][0][1] >= total_money_y and boxes[idx][0][1] < (total_money_y + 100):
-                result["总金额"] = float(match.group(1).replace(' ', '').replace(',', ''))
+            match = re.search(r"[￥¥](\d+\s*\.\d{1,2})", t)
+            if match:
+                if total_money_y == 0:
+                    total_money_y = 1150
+                if boxes[idx][0][1] >= total_money_y and boxes[idx][0][1] < (total_money_y + 100):
+                    result["总金额"] = float(match.group(1).replace(' ', '').replace(',', ''))
+            else:
+                    x = boxes[idx][0][0] + 1100
+                    y = total_money_y
+                    for j, b in enumerate(boxes):
+                        if b[0][0] >= x and b[0][1] >= y and b[0][1] < (y + 100):
+                            money_txt = texts[j].replace(' ', '').replace(',', '').replace('￥', '').replace('¥', '')
+                            try:
+                                result["总金额"] = float(money_txt)
+                            except ValueError:
+                                pass
+                            break
         match = re.search(r"备注[:：](.*)", t)
         if match:
             result["备注"] = match.group(1)
