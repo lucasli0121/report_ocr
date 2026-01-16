@@ -392,7 +392,7 @@ def extract_certificate_fields(texts: list, scores, boxes: list) -> dict:
             paid_amounts = []
             for j, b in enumerate(boxes):
                 if b[0][0] >= x and b[0][0] < (x + 300) and b[0][1] >= y and b[0][1] <= (y + 100):
-                    paid_amounts.append(float(texts[j].replace(' ', '').replace(',', '')))
+                    paid_amounts.append(float(texts[j].replace(' ', '').replace(',', '').replace('￥', '').replace('¥', '')))
                     y = b[0][1] + 50  # 继续向下偏移 30
                     if y >= 1100:
                         break
