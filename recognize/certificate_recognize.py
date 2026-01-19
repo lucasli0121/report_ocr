@@ -65,5 +65,5 @@ def save_certificate_daos(dao_list: list[TaxApprovalDao]) -> CertificateRecogniz
     for dao in dao_list:
         res, msg = g.my_db.add_tax_approval(dao.to_db())
         if not res:
-            return CertificateRecognizeResult(result=-1, msg=f'保存税务批准文件失败: {msg}', data=None)
+            return CertificateRecognizeResult(result=-1, msg=f'保存税务批准文件失败,{msg}', data=None)
     return CertificateRecognizeResult(result=0, msg='保存税务批准文件成功', data=dao_list)

@@ -9,10 +9,11 @@ Description:
 
 from typing import Any
 from bson import ObjectId
-from pymongo import MongoClient
+from pymongo import MongoClient, WriteConcern
 from pymongo.collection import Collection
 import logging
 from db.base import DbBaseImpl
+from copy import deepcopy
 
 class MongoImpl(DbBaseImpl):
     def __init__(self):
@@ -22,6 +23,7 @@ class MongoImpl(DbBaseImpl):
             self.conn = MongoClient(
                 host = self.mongo_host,
                 port=int(self.mongo_port),
+                w="majority",
                 username=self.mongo_username,
                 password=self.mongo_password,
                 authSource=self.mongo_database)
@@ -55,14 +57,14 @@ class MongoImpl(DbBaseImpl):
         try:
             if table is None:
                 self.logger.error("table not found in MongoDB.")
-                return False
-            if 'id' in data:
-                del data['id']
+                return False, None
+            data = dict(data)
+            data.pop('id', None)  # 移除'id'字段，MongoDB会自动生成'_id'
             ret = table.insert_one(data)
-            return ret.acknowledged, ret.inserted_id  # 确认插入操作已被确认
+            return ret.acknowledged, str(ret.inserted_id)  # 确认插入操作已被确认
         except Exception as e:
             self.logger.error(f"添加信息失败: {e}")
-            return False, None
+            return False, e.args[0]
         
     """ 
     更新到数据库
@@ -75,9 +77,11 @@ class MongoImpl(DbBaseImpl):
             if table is None:
                 self.logger.error("table not found in MongoDB.")
                 return False
+            data = deepcopy(data)
             if len(condition) == 0:
                 condition = {'_id': ObjectId(data.get('id', ''))}  # 如果没有条件，使用id作为默认条件
             else:
+                condition = deepcopy(condition)
                 if 'id' in condition:
                     condition['_id'] = ObjectId(condition['id'])
                     del condition['id']
