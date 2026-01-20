@@ -1,11 +1,14 @@
 
 from datetime import datetime
+import logging
 import re
 from typing import Optional
 from dataclasses import dataclass
 from dao.company_dao import CompanyDao
 from dao.tax_approval_dao import TaxApprovalDao
 from utils import global_vars as g
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class CertificateRecognizeResult:
@@ -63,7 +66,12 @@ def save_certificate_daos(dao_list: list[TaxApprovalDao]) -> CertificateRecogniz
     if res and value is not None:
         return CertificateRecognizeResult(result=-1, msg=f'完税证明重复添加，凭证号：{first_dao.approval_no}', data=None)
     for dao in dao_list:
-        res, msg = g.my_db.add_tax_approval(dao.to_db())
+        res, value = g.my_db.add_tax_approval(dao.to_db())
         if not res:
-            return CertificateRecognizeResult(result=-1, msg=f'保存税务批准文件失败,{msg}', data=None)
+            return CertificateRecognizeResult(result=-1, msg=f'保存税务批准文件失败,{value}', data=None)
+        elif value is not None:
+            res, new_dao = g.my_db.query_tax_approval_by_id(value)
+            if res is False or new_dao is None:
+                logger.error(f"保存税务批准文件后，查询失败，id={value}, 再重新保存一次")
+                g.my_db.add_tax_approval(dao.to_db())
     return CertificateRecognizeResult(result=0, msg='保存税务批准文件成功', data=dao_list)
