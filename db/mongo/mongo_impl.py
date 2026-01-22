@@ -9,7 +9,7 @@ Description:
 
 from typing import Any
 from bson import ObjectId
-from pymongo import MongoClient, WriteConcern
+from pymongo import MongoClient, ReadPreference, WriteConcern
 from pymongo.collection import Collection
 import logging
 from db.base import DbBaseImpl
@@ -24,6 +24,7 @@ class MongoImpl(DbBaseImpl):
                 host = self.mongo_host,
                 port=int(self.mongo_port),
                 w="majority",
+                read_preference=ReadPreference.PRIMARY,
                 username=self.mongo_username,
                 password=self.mongo_password,
                 authSource=self.mongo_database)
