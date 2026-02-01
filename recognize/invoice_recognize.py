@@ -45,10 +45,16 @@ def parse_invoice_recognize_result_to_dao(result: list) -> InvoiceRecognizeResul
         dao.tax_rate = 0.09
     elif tax_rate == '13%':
         dao.tax_rate = 0.13
-    if dao.tax_rate > 0.03:
-        dao.invoice_type = 1 # 增值税专用发票
-    else:
-        dao.invoice_type = 0 # 增值税普通发票
+    match result[0].get('发票类型', ''):
+        case '专用':
+            dao.invoice_type = 1
+        case '普通':
+            dao.invoice_type = 0
+        case _:
+            if dao.tax_rate > 0.03:
+                dao.invoice_type = 1 # 增值税专用发票
+            else:
+                dao.invoice_type = 0 # 增值税普通发票
     dao.before_tax_money = before_tax_money
     dao.added_tax = tax_money
     dao.invoice_money = invoice_money

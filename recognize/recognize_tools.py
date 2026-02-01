@@ -9,6 +9,7 @@ import re
 import numpy as np
 import pandas as pd
 import os
+import cv2
 import paddle
 from paddleocr import PaddleOCR
 from pdf2image import convert_from_bytes
@@ -28,7 +29,7 @@ paddle.device.set_device('cpu')
 paddle.set_flags({'FLAGS_use_mkldnn': False})  # 关闭 MKLDNN
 # 2. 初始化 OCR
 ocr = PaddleOCR(
-    use_angle_cls=True, 
+    use_angle_cls=True,
     lang="ch")
 
 def handle_upload_excel(event):
@@ -47,7 +48,7 @@ def extract_invoice_fields(texts: list, scores, boxes: list):
         "数量": 0,
         "单价": 0,
         "税率": 0,
-        "发票类型": 1,
+        "发票类型": '',
         "发票号码": '',
         "开票日期": '',
         "红字发票": False,
@@ -62,6 +63,9 @@ def extract_invoice_fields(texts: list, scores, boxes: list):
     money_x = 0
     tax_money_x = 0
     for idx, t in enumerate(texts):
+        match = re.search(r"电子发票[(（](.+?)[)）]发票", t)
+        if match:
+            result["发票类型"] = match.group(1)
         # 发票号码（8位数字）
         match = re.search(r"^发票号码[:：]?\s*([0-9]+)", t)
         if match:
@@ -443,7 +447,83 @@ def extract_certificate_fields(texts: list, scores, boxes: list) -> dict:
                     break
                 
     return result
+
+"""
+# @function erase_invoice_img_seal
+# @description 去除发票图片中的红色印章以提升 OCR 识别率
+# @param img 发票图片的 numpy 数组格式
+"""
+def erase_invoice_img_seal(img: np.ndarray) -> np.ndarray:
+    """改进发票图片质量以提升 OCR 识别率"""
+    params = {
+        "name": "Default (现有方案)",
+        "r_threshold": 150,
+        "r_g_diff": 5,
+        "r_b_diff": 5,
+        "inpaint_radius": 5,
+        "kernel_size": 5,
+    }
+    img = img.copy()
+    h, w = img.shape[:2]
     
+    # 提取印章区域
+    y1 = int(h * 0.05)
+    y2 = int(h * 0.20)
+    x1 = int(w * 0.40)
+    x2 = int(w * 0.60)
+    
+    roi = img[y1:y2, x1:x2]
+    b, g, r = cv2.split(roi)
+    
+    # 红章检测
+    red_mask = (
+        (r > params['r_threshold']) &
+        (r > g) &
+        (r > b) &
+        ((r - g) > params['r_g_diff']) &
+        ((r - b) > params['r_b_diff'])
+    )
+    
+    red_mask = red_mask.astype(np.uint8) * 255
+    
+    # 形态学操作
+    kernel_small = cv2.getStructuringElement(
+        cv2.MORPH_ELLIPSE, 
+        (3, 3)
+    )
+    red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_OPEN, kernel_small)
+    
+    k_size = params['kernel_size']
+    kernel_medium = cv2.getStructuringElement(
+        cv2.MORPH_ELLIPSE, 
+        (k_size, k_size)
+    )
+    red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel_medium)
+    
+    # 修复
+    roi_clean = roi.copy()
+    roi_blurred = cv2.GaussianBlur(roi, (15, 15), 0)
+    roi_clean[red_mask > 0] = roi_blurred[red_mask > 0]
+    
+    roi_clean = cv2.inpaint(
+        roi_clean.astype(np.uint8),
+        red_mask,
+        inpaintRadius=params['inpaint_radius'],
+        flags=cv2.INPAINT_NS
+    )
+    
+    roi_clean = cv2.bilateralFilter(roi_clean, 9, 75, 75)
+    
+    img2 = img.copy()
+    img2[y1:y2, x1:x2] = roi_clean
+    return img2
+
+"""
+# @function recognize_invoice_pdf
+# @description 识别发票 PDF 文件内容
+# @param pdf_content PDF 文件的二进制内容
+# @return 提取的发票字段列表
+"""    
 def recognize_invoice_pdf(pdf_content):
     # 1. PDF 转图片
     pages = convert_from_bytes(pdf_content, dpi=300)
@@ -458,7 +538,7 @@ def recognize_invoice_pdf(pdf_content):
 
         page = page.resize((2*page.width // 3, 2*page.height // 3))
         img = np.array(page)
-
+        img = erase_invoice_img_seal(img)
         results = ocr.predict(img)
         texts  = results[0]['rec_texts']
         scores = results[0]['rec_scores']
@@ -505,14 +585,3 @@ def recognize_certificate_pdf(pdf_content):
         all_fields.append(fields)
 
     return all_fields
-
-def handle_upload_ocr(event):
-    # event.content 是文件的二进制内容
-    import io
-    file_content = io.BytesIO(event.content.read())
-    results = recognize_invoice_pdf(file_content.read())
-    print(results)
-
-def handle_muliple_upload(event):
-    # event.content 是文件的二进制内容
-    pass
