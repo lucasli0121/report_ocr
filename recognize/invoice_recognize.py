@@ -48,7 +48,7 @@ def parse_invoice_recognize_result_to_dao(result: list) -> InvoiceRecognizeResul
     match result[0].get('发票类型', ''):
         case '专用':
             dao.invoice_type = 1
-        case '普通':
+        case '普通'|'通':
             dao.invoice_type = 0
         case _:
             if dao.tax_rate > 0.03:
