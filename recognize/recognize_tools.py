@@ -457,12 +457,12 @@ def extract_certificate_fields(texts: list, scores, boxes: list) -> dict:
 def erase_invoice_img_seal(img: np.ndarray) -> np.ndarray:
     """改进发票图片质量以提升 OCR 识别率"""
     params = {
-        "name": "Default (现有方案)",
+        "name": "更大核大小 (完整印章)",
         "r_threshold": 150,
         "r_g_diff": 5,
         "r_b_diff": 5,
         "inpaint_radius": 5,
-        "kernel_size": 5,
+        "kernel_size": 7,
     }
     img = img.copy()
     h, w = img.shape[:2]
