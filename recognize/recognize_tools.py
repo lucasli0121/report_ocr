@@ -63,9 +63,10 @@ def extract_invoice_fields(texts: list, scores, boxes: list):
     money_x = 0
     tax_money_x = 0
     for idx, t in enumerate(texts):
-        match = re.search(r"电子发票[(（](.+?)[)）]发票", t)
+        match = re.search(r"(专用|普通)(?=发票)", t)
         if match:
             result["发票类型"] = match.group(1)
+            
         # 发票号码（8位数字）
         match = re.search(r"^发票号码[:：]?\s*([0-9]+)", t)
         if match:
