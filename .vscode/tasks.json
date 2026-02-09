@@ -8,7 +8,7 @@
 			"args": [
 				"build",
 				"-t",
-				"smartschoolweb:latest",
+				"reportocr:latest",
 				"-f",
 				"${workspaceFolder}/Dockerfile",
 				"${workspaceFolder}"
@@ -18,12 +18,16 @@
 			"type": "process",
 			"label": "docker-run: debug",
 			"command": "run",
-			"dependsOn": [
-				"docker-build"
-			],
-			"python": {
-				"file": "main.py"
-			}
+			// "dependsOn": [
+			// 	"docker-build"
+			// ],
+			"args": [
+				"--rm",
+				"-it",
+				"reportocr:latest",
+				"python",
+				"main.py"
+			]
 		}
 	]
 }

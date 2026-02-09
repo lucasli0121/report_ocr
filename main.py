@@ -20,7 +20,7 @@ def init_logger():
         logging.basicConfig(
             level=logging.INFO,
             format="%(asctime)s-%(name)s-%(lineno)s-%(levelname)s-%(message)s",
-            filename="log/beautify_report.log",
+            filename="log/report_ocr.log",
             filemode="w",
         )
         

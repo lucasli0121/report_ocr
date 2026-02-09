@@ -1,3 +1,4 @@
+nicegui >= 3.3
 numpy >= 1.20.1
 simpy >= 4.0.1
 pyzmq >= 26.0.0

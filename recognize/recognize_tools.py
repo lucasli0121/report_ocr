@@ -29,8 +29,69 @@ paddle.device.set_device('cpu')
 paddle.set_flags({'FLAGS_use_mkldnn': False})  # 关闭 MKLDNN
 # 2. 初始化 OCR
 ocr = PaddleOCR(
-    use_angle_cls=True,
+    use_textline_orientation=True, 
     lang="ch")
+
+# 参数组合
+erase_seal_params_list = [
+    {
+        "name": "Default (现有方案)",
+        "r_threshold": 150,
+        "r_g_diff": 5,
+        "r_b_diff": 5,
+        "inpaint_radius": 5,
+        "kernel_size": 5,
+    },
+    # 更低阈值 (检测更多红章)，这个参数组合容易导致误检，注释掉
+    # {
+    #     "name": "更低阈值 (检测更多红章)",
+    #     "r_threshold": 120,
+    #     "r_g_diff": 5,
+    #     "r_b_diff": 5,
+    #     "inpaint_radius": 5,
+    #     "kernel_size": 5,
+    # },
+    {
+        "name": "更高阈值 (减少误检)",
+        "r_threshold": 180,
+        "r_g_diff": 5,
+        "r_b_diff": 5,
+        "inpaint_radius": 5,
+        "kernel_size": 5,
+    },
+    {
+        "name": "更大修复半径",
+        "r_threshold": 150,
+        "r_g_diff": 5,
+        "r_b_diff": 5,
+        "inpaint_radius": 8,
+        "kernel_size": 5,
+    },
+    {
+        "name": "更小核大小 (保护文字)",
+        "r_threshold": 150,
+        "r_g_diff": 5,
+        "r_b_diff": 5,
+        "inpaint_radius": 5,
+        "kernel_size": 3,
+    },
+    {
+        "name": "更大核大小 (完整印章)",
+        "r_threshold": 150,
+        "r_g_diff": 5,
+        "r_b_diff": 5,
+        "inpaint_radius": 5,
+        "kernel_size": 7,
+    },
+    {
+        "name": "严格红色判定",
+        "r_threshold": 150,
+        "r_g_diff": 15,
+        "r_b_diff": 15,
+        "inpaint_radius": 5,
+        "kernel_size": 5,
+    },
+]
 
 def handle_upload_excel(event):
     # event.content 是文件的二进制内容
@@ -454,17 +515,9 @@ def extract_certificate_fields(texts: list, scores, boxes: list) -> dict:
 # @description 去除发票图片中的红色印章以提升 OCR 识别率
 # @param img 发票图片的 numpy 数组格式
 """
-def erase_invoice_img_seal(img: np.ndarray) -> np.ndarray:
-    """改进发票图片质量以提升 OCR 识别率"""
-    params = {
-        "name": "更大核大小 (完整印章)",
-        "r_threshold": 150,
-        "r_g_diff": 5,
-        "r_b_diff": 5,
-        "inpaint_radius": 5,
-        "kernel_size": 7,
-    }
+def erase_invoice_img_seal(img: np.ndarray, params: dict) -> np.ndarray:
     img = img.copy()
+    img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
     h, w = img.shape[:2]
     
     # 提取印章区域
@@ -501,6 +554,7 @@ def erase_invoice_img_seal(img: np.ndarray) -> np.ndarray:
     )
     red_mask = cv2.morphologyEx(red_mask, cv2.MORPH_CLOSE, kernel_medium)
     
+    # cv2.imwrite(f"debug_red_mask_{params['name']}.jpg", red_mask)
     # 修复
     roi_clean = roi.copy()
     roi_blurred = cv2.GaussianBlur(roi, (15, 15), 0)
@@ -515,6 +569,8 @@ def erase_invoice_img_seal(img: np.ndarray) -> np.ndarray:
     
     roi_clean = cv2.bilateralFilter(roi_clean, 9, 75, 75)
     
+    # cv2.imwrite(f"debug_roi_clean_{params['name']}.jpg", roi_clean)
+
     img2 = img.copy()
     img2[y1:y2, x1:x2] = roi_clean
     return img2
@@ -539,19 +595,23 @@ def recognize_invoice_pdf(pdf_content):
 
         page = page.resize((2*page.width // 3, 2*page.height // 3))
         img = np.array(page)
-        img = erase_invoice_img_seal(img)
-        results = ocr.predict(img)
-        texts  = results[0]['rec_texts']
-        scores = results[0]['rec_scores']
-        boxes  = results[0]['dt_polys']
+        fields = {}
+        for params in erase_seal_params_list:
+            img2 = erase_invoice_img_seal(img, params)
+            # cv2.imwrite(f"debug_page_{i+1}_{params['name']}.jpg", img2)
+            results = ocr.predict(img2)
+            texts  = results[0]['rec_texts']
+            scores = results[0]['rec_scores']
+            boxes  = results[0]['dt_polys']
 
-        print("OCR 结果：")
-        for text, score, box in zip(texts, scores, boxes):
-            print(f"文字: {text}, 置信度: {score:.3f}, 坐标: {box}")
+            print("OCR 结果：")
+            for text, score, box in zip(texts, scores, boxes):
+                print(f"文字: {text}, 置信度: {score:.3f}, 坐标: {box}")
 
-        fields = extract_invoice_fields(texts, scores, boxes)
-        print("\n提取字段：", fields)
-
+            fields = extract_invoice_fields(texts, scores, boxes)
+            print("\n提取字段：", fields)
+            if fields['发票类型'] != '':
+                break
         all_fields.append(fields)
 
     return all_fields
