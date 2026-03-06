@@ -408,6 +408,7 @@ def extract_certificate_fields(texts: list, scores, boxes: list) -> dict:
                     if y >= 1100:
                         break
             result["税种"].extend(tax_types)
+        
         match = re.search(r"品目名称", t)
         if match:
             x = boxes[idx][0][0] - 100
@@ -507,7 +508,17 @@ def extract_certificate_fields(texts: list, scores, boxes: list) -> dict:
                     y = y + 30  # 继续向下偏移 30
                 if y >= 1400:
                     break
-                
+    if len(result["税种"]) == 0:
+        x = 520
+        y = 650
+        tax_types = []
+        for j, b in enumerate(boxes):
+            if b[0][0] >= x and b[0][0] < (x + 100) and b[0][1] >= y and b[0][1] <= (y + 100):
+                tax_types.append(texts[j])
+                y = b[0][1] + 30  # 继续向下偏移 30
+                if y >= 1100:
+                    break
+        result["税种"].extend(tax_types)
     return result
 
 """
