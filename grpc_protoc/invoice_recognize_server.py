@@ -8,7 +8,7 @@ import requests
 from dao.invoice_record_dao import InvoiceRecordDao
 from grpc_protoc import invoice_rpc_pb2
 from grpc_protoc import invoice_rpc_pb2_grpc
-from recognize.certificate_recognize import parse_certificate_result_to_dao, save_certificate_daos
+from recognize.certificate_recognize import CertificateRecognizeResult, parse_certificate_result_to_dao, save_certificate_daos
 from recognize.invoice_recognize import InvoiceRecognizeResult, parse_invoice_recognize_result_to_dao, save_invoice_dao
 from recognize.recognize_tools import recognize_certificate_pdf, recognize_invoice_pdf
 from utils import global_vars as g
@@ -82,8 +82,16 @@ class InvoiceRecognizeServicer(invoice_rpc_pb2_grpc.InvoiceRpcServicer):
         # For demonstration, we will just simulate a successful response
         response = requests.get(host_url)
         if response.status_code == 200:
-            result_list = recognize_certificate_pdf(response.content)
-            parse_response = parse_certificate_result_to_dao(result_list)
+            try_num = 0
+            parse_response: CertificateRecognizeResult = CertificateRecognizeResult(result=-1, msg="识别失败", data=None)
+            while(try_num < 2):
+                result_list = recognize_certificate_pdf(response.content)
+                parse_response = parse_certificate_result_to_dao(result_list)
+                if parse_response.result == 0:
+                    break
+                try_num += 1
+                self.logger.info(f"Certificate recognition attempt {try_num} failed: {parse_response.msg}")
+                time.sleep(1)  # 等待1秒后重试
             if parse_response.result != 0:
                 self.logger.info(f"Certificate recognition failed: {parse_response.msg}")
                 yield invoice_rpc_pb2.InvoiceRecognizeResp(
