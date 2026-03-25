@@ -1,3 +1,10 @@
+"""
+Author: liguoqiang
+Date: 2025-12-15 16:59:10
+LastEditors: liguoqiang
+LastEditTime: 2026-03-25 15:44:38
+Description: 
+"""
 
 from datetime import datetime
 import logging
@@ -45,6 +52,8 @@ def parse_certificate_result_to_dao(results: list) -> CertificateRecognizeResult
             dao.create_time = re.sub(pattern, r"\1-\2-\3", text)
         else:
             dao.create_time = text  # 不匹配则保持原样
+        if dao.create_time is None or dao.create_time == '':
+            dao.create_time = datetime.now().strftime("%Y-%m-%d")
         dao.tax_authority = result_data.get('税务机关', '')
         dao.ori_voucher_number = ori_number_list[i]
         dao.tax_type = tax_type_list[i] if i < len(tax_type_list) else ''
