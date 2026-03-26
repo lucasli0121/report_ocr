@@ -379,9 +379,9 @@ def extract_certificate_fields(texts: list, scores, boxes: list) -> dict:
         match = re.search(r"纳税人名称", t)
         if match:
             x = boxes[idx][0][0] + 100
-            y = boxes[idx][0][1] - 5
+            y = boxes[idx][0][1] - 10
             for j, b in enumerate(boxes):
-                if b[0][0] >= x and b[0][0] < (x + 200) and b[0][1] >= y and b[0][1] <= (y + 30):
+                if b[0][0] >= x and b[0][0] < (x + 200) and b[0][1] >= y and b[0][1] <= (y + 50):
                     result["名称"] = texts[j]
                     break
         match = re.search(r"原凭证号", t)

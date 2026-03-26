@@ -34,6 +34,8 @@ def parse_certificate_result_to_dao(results: list) -> CertificateRecognizeResult
     entry_date_list = result_data.get('入库日期', [])
     paid_in_money_list = result_data.get('实缴金额', [])
     company_name = result_data.get('名称', '')
+    if len(company_name) == 0:
+        return CertificateRecognizeResult(result=-1, msg='上传文件中识别的公司名称为空', data=None)
     result, company_list = g.my_db.query_all_company(company_name, '', '', '')
     if result is False or company_list is None or len(company_list) == 0:
         return CertificateRecognizeResult(result=-1, msg=f'上传文件中的公司名称 {company_name} 未在系统中找到，请先添加公司信息', data=None)
