@@ -288,8 +288,19 @@ def extract_invoice_fields(texts: list, scores, boxes: list):
             if result["备注"] == '':
                 result["备注"] = remark
 
-    if isinstance(result["含税额"], (int, float)) and isinstance(result["金额"], (int, float)) and result["含税额"] > 0 and result["金额"] > 0:
-        result["税额"] = round(float(result["含税额"] - result["金额"]), 2)
+    if not result["红字发票"] and result["金额"] < 0.0:
+        result["红字发票"] = True
+    if not result["红字发票"]:
+        if isinstance(result["含税额"], (int, float)) and isinstance(result["金额"], (int, float)) and result["含税额"] > 0 and result["金额"] > 0:
+            if isinstance(result["税额"], (int, float)) and result["税额"] > 0:
+                # 如果税额已经识别到了，则不覆盖, 进行检查
+                total = float(result["金额"]) + float(result["税额"])
+                if float(result["含税额"]) < total:
+                    result["含税额"] = total
+            else:
+                result["税额"] = round(float(result["含税额"] - result["金额"]), 2)
+                if result["税额"] < 0:
+                    result["税额"] = 0.0
     # if result["备注"] == '':
     #     x = 10
     #     y = 840
@@ -301,9 +312,7 @@ def extract_invoice_fields(texts: list, scores, boxes: list):
     #             else:
     #                 remark = remark + texts[j]
     #     result["备注"] = remark
-    if not result["红字发票"] and result["金额"] < 0.0:
-        result["红字发票"] = True
-        
+    
     return result
 
 def extract_certificate_fields(texts: list, scores, boxes: list) -> dict:

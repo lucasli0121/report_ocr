@@ -33,8 +33,16 @@ class InvoiceRecognizeServicer(invoice_rpc_pb2_grpc.InvoiceRpcServicer):
         # For demonstration, we will just simulate a successful response
         response = requests.get(host_url)
         if response.status_code == 200:
-            result_list = recognize_invoice_pdf(response.content)
-            parse_response = parse_invoice_recognize_result_to_dao(result_list)
+            try_num = 0
+            parse_response: InvoiceRecognizeResult = InvoiceRecognizeResult(result=-1, msg="识别失败", data=None)
+            while(try_num < 2):
+                result_list = recognize_invoice_pdf(response.content)
+                parse_response = parse_invoice_recognize_result_to_dao(result_list)
+                if parse_response.result == 0:
+                    break
+                try_num += 1
+                self.logger.info(f"Invoice recognition attempt {try_num} failed: {parse_response.msg}")
+                time.sleep(2)  # 等待2秒后重试
             if parse_response.result != 0:
                 self.logger.info(f"Invoice recognition failed: {parse_response.msg}")
                 yield invoice_rpc_pb2.InvoiceRecognizeResp(
@@ -91,7 +99,7 @@ class InvoiceRecognizeServicer(invoice_rpc_pb2_grpc.InvoiceRpcServicer):
                     break
                 try_num += 1
                 self.logger.info(f"Certificate recognition attempt {try_num} failed: {parse_response.msg}")
-                time.sleep(1)  # 等待1秒后重试
+                time.sleep(2)  # 等待2秒后重试
             if parse_response.result != 0:
                 self.logger.info(f"Certificate recognition failed: {parse_response.msg}")
                 yield invoice_rpc_pb2.InvoiceRecognizeResp(
