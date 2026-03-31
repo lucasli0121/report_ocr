@@ -16,11 +16,11 @@ class InvoiceRecognizeResult:
 def parse_invoice_recognize_result_to_dao(result: list) -> InvoiceRecognizeResult:
     if result is None or len(result) == 0:
         return InvoiceRecognizeResult(result=-1, msg='未识别到发票信息', data=None)
-    if result["税额"] < 0:
+    if float(result["税额"]) < 0:
         return InvoiceRecognizeResult(result=-1, msg='税额计算错误', data=None)
     if not result["红字发票"]:
-        total = result["税额"] + result["金额"]
-        if result["含税额"] != total:
+        total = float(result["税额"]) + float(result["金额"])
+        if float(result["含税额"]) != total:
             return InvoiceRecognizeResult(result=-1, msg='含税额计算错误', data=None)
     dao = InvoiceRecordDao()
     dao.invoice_content = result[0].get('发票内容', '')
