@@ -16,11 +16,15 @@ class InvoiceRecognizeResult:
 def parse_invoice_recognize_result_to_dao(result: list) -> InvoiceRecognizeResult:
     if result is None or len(result) == 0:
         return InvoiceRecognizeResult(result=-1, msg='未识别到发票信息', data=None)
-    if float(result["税额"]) < 0:
+    before_tax_money = result[0].get('含税额', 0.0)
+    tax_money = result[0].get('税额', 0.0)
+    invoice_money = result[0].get('金额', 0.0)
+    tax_rate = result[0].get('税率', 0.0)
+    if float(tax_money) < 0:
         return InvoiceRecognizeResult(result=-1, msg='税额计算错误', data=None)
-    if not result["红字发票"]:
-        total = float(result["税额"]) + float(result["金额"])
-        if float(result["含税额"]) != total:
+    if not result[0].get('红字发票', False):
+        total = float(tax_money) + float(invoice_money)
+        if float(before_tax_money) != total:
             return InvoiceRecognizeResult(result=-1, msg='含税额计算错误', data=None)
     dao = InvoiceRecordDao()
     dao.invoice_content = result[0].get('发票内容', '')
@@ -37,10 +41,7 @@ def parse_invoice_recognize_result_to_dao(result: list) -> InvoiceRecognizeResul
             dao.invoice_time = dt.strftime('%Y-%m-%d')
         except ValueError:
             dao.invoice_time = ''
-    before_tax_money = result[0].get('含税额', 0.0)
-    tax_money = result[0].get('税额', 0.0)
-    invoice_money = result[0].get('金额', 0.0)
-    tax_rate = result[0].get('税率', 0.0)
+    
     if tax_rate == '1%':
         dao.tax_rate = 0.01
     elif tax_rate == '3%':
