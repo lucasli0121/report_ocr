@@ -24,7 +24,9 @@ def parse_invoice_recognize_result_to_dao(result: list) -> InvoiceRecognizeResul
         return InvoiceRecognizeResult(result=-1, msg='税额计算错误', data=None)
     if not result[0].get('红字发票', False):
         total = float(tax_money) + float(invoice_money)
-        if float(before_tax_money) != total:
+        diff = abs(float(before_tax_money) - total)
+        # 允许一点误差
+        if diff > 0.09:
             return InvoiceRecognizeResult(result=-1, msg='含税额计算错误', data=None)
     dao = InvoiceRecordDao()
     dao.invoice_content = result[0].get('发票内容', '')
