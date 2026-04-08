@@ -20,9 +20,9 @@ def parse_invoice_recognize_result_to_dao(result: list) -> InvoiceRecognizeResul
     tax_money = result[0].get('税额', 0.0)
     invoice_money = result[0].get('金额', 0.0)
     tax_rate = result[0].get('税率', 0.0)
-    if float(tax_money) < 0:
-        return InvoiceRecognizeResult(result=-1, msg='税额计算错误', data=None)
     if not result[0].get('红字发票', False):
+        if float(tax_money) < 0:
+            return InvoiceRecognizeResult(result=-1, msg='税额计算错误', data=None)
         total = float(tax_money) + float(invoice_money)
         diff = abs(float(before_tax_money) - total)
         # 允许一点误差
