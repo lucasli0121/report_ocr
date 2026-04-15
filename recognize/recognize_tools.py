@@ -601,7 +601,7 @@ def erase_invoice_img_seal(img: np.ndarray, params: dict) -> np.ndarray:
 # @param pdf_content PDF 文件的二进制内容
 # @return 提取的发票字段列表
 """    
-def recognize_invoice_pdf(pdf_content):
+def recognize_invoice_pdf(pdf_content, try_num: int = 0):
     # 1. PDF 转图片
     pages = convert_from_bytes(pdf_content, dpi=300)
 
@@ -617,11 +617,22 @@ def recognize_invoice_pdf(pdf_content):
         img = np.array(page)
         fields = {}
         for params in erase_seal_params_list:
-            img2 = erase_invoice_img_seal(img, params)
+            img_clean = erase_invoice_img_seal(img, params)
             # cv2.imwrite(f"debug_page_{i+1}_{params['name']}.jpg", img2)
             # 可选：轻微锐化
-            kernel = np.array([[0,-2,0],[-1,9,-1],[0,-2,0]])
-            img_enhanced = cv2.filter2D(img2, -1, kernel)
+            kernel = np.array([[0,-1,0],[-1,5,-1],[0,-1,0]])
+            match try_num:
+                case 0:
+                    img_enhanced = cv2.filter2D(img_clean, -1, kernel)
+                case 1:
+                    img_enhanced = cv2.filter2D(img_clean, -1, kernel)
+                    img_enhanced = cv2.filter2D(img_enhanced, -1, kernel)
+                case 2:
+                    kernel = np.array([[0,-1,0],[-1,9,-1],[0,-1,0]])
+                    img_enhanced = cv2.filter2D(img_clean, -1, kernel)
+                case _:
+                    kernel = np.array([[0,-2,0],[-1,9,-1],[0,-2,0]])
+                    img_enhanced = cv2.filter2D(img_clean, -1, kernel)
             results = ocr.predict(img_enhanced)
 
             texts  = results[0]['rec_texts']
@@ -640,7 +651,7 @@ def recognize_invoice_pdf(pdf_content):
 
     return all_fields
 
-def recognize_certificate_pdf(pdf_content):
+def recognize_certificate_pdf(pdf_content, try_num: int = 0):
     # 1. PDF 转图片
     pages = convert_from_bytes(pdf_content, dpi=300)
 
@@ -658,9 +669,20 @@ def recognize_certificate_pdf(pdf_content):
         earse_params_len = len(erase_seal_params_list)
         img_clean = erase_invoice_img_seal(img_cv, erase_seal_params_list[earse_params_len-1])
         kernel = np.array([[0,-1,0],[-1,5,-1],[0,-1,0]])
-        img_enhanced = cv2.filter2D(img_clean, -1, kernel)
-        img_enhanced = cv2.filter2D(img_enhanced, -1, kernel)
-        cv2.imwrite("static/debug_img_enhanced.jpg", img_enhanced)
+        match try_num:
+            case 0:
+                img_enhanced = cv2.filter2D(img_clean, -1, kernel)
+            case 1:
+                img_enhanced = cv2.filter2D(img_clean, -1, kernel)
+                img_enhanced = cv2.filter2D(img_enhanced, -1, kernel)
+            case 2:
+                kernel = np.array([[0,-1,0],[-1,9,-1],[0,-1,0]])
+                img_enhanced = cv2.filter2D(img_clean, -1, kernel)
+            case _:
+                kernel = np.array([[0,-2,0],[-1,9,-1],[0,-2,0]])
+                img_enhanced = cv2.filter2D(img_clean, -1, kernel)
+
+        # cv2.imwrite("static/debug_img_enhanced.jpg", img_enhanced)
         results = ocr.predict(img_enhanced)
         
         texts  = results[0]['rec_texts']

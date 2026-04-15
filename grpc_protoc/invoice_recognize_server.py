@@ -28,14 +28,14 @@ class InvoiceRecognizeServicer():
             
             try_num = 0
             return_response: InvoiceRecognizeResult = InvoiceRecognizeResult(result=-1, msg="识别失败", data=None)
-            while(try_num < 2):
-                result_list = recognize_invoice_pdf(http_response.content)
+            while(try_num < 4):
+                result_list = recognize_invoice_pdf(http_response.content, try_num)
                 return_response = parse_invoice_recognize_result_to_dao(result_list)
                 if return_response.result == 0:
                     break
                 try_num += 1
                 self.logger.info(f"Invoice recognition attempt {try_num} failed: {return_response.msg}")
-                time.sleep(2)  # 等待2秒后重试
+                time.sleep(1)  # 等待1秒后重试
             if return_response.result == 0:
                 self.logger.info(f"Invoice recognized successfully: {return_response.data}")
                 # 保存下载的内容到backup目录
@@ -70,14 +70,14 @@ class InvoiceRecognizeServicer():
         if http_response.status_code == 200:
             
             try_num = 0
-            while(try_num < 2):
-                result_list = recognize_certificate_pdf(http_response.content)
+            while(try_num < 4):
+                result_list = recognize_certificate_pdf(http_response.content, try_num)
                 return_response = parse_certificate_result_to_dao(result_list)
                 if return_response.result == 0:
                     break
                 try_num += 1
                 self.logger.info(f"Certificate recognition attempt {try_num} failed: {return_response.msg}")
-                time.sleep(2)  # 等待2秒后重试
+                time.sleep(1)  # 等待1秒后重试
             if return_response.result == 0:
                 self.logger.info(f"Certificate recognized successfully: {return_response.data}")
                 #下载的文件保存到本地static/backup目录下
