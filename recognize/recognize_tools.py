@@ -657,9 +657,10 @@ def recognize_certificate_pdf(pdf_content):
         img_cv = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
         earse_params_len = len(erase_seal_params_list)
         img_clean = erase_invoice_img_seal(img_cv, erase_seal_params_list[earse_params_len-1])
-        kernel = np.array([[0,-2,0],[-1,9,-1],[0,-2,0]])
+        kernel = np.array([[0,-1,0],[-1,5,-1],[0,-1,0]])
         img_enhanced = cv2.filter2D(img_clean, -1, kernel)
-        #cv2.imwrite("debug_img_enhanced.jpg", img_enhanced)
+        img_enhanced = cv2.filter2D(img_enhanced, -1, kernel)
+        cv2.imwrite("static/debug_img_enhanced.jpg", img_enhanced)
         results = ocr.predict(img_enhanced)
         
         texts  = results[0]['rec_texts']
