@@ -620,7 +620,7 @@ def recognize_invoice_pdf(pdf_content):
             img2 = erase_invoice_img_seal(img, params)
             # cv2.imwrite(f"debug_page_{i+1}_{params['name']}.jpg", img2)
             # 可选：轻微锐化
-            kernel = np.array([[0,-1,0],[-1,5,-1],[0,-1,0]])
+            kernel = np.array([[0,-2,0],[-1,9,-1],[0,-2,0]])
             img_enhanced = cv2.filter2D(img2, -1, kernel)
             results = ocr.predict(img_enhanced)
 
@@ -655,8 +655,11 @@ def recognize_certificate_pdf(pdf_content):
         page = page.resize((2*page.width // 3, 2*page.height // 3))
         img = np.array(page)
         img_cv = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
-        kernel = np.array([[0,-1,0],[-1,5,-1],[0,-1,0]])
-        img_enhanced = cv2.filter2D(img_cv, -1, kernel)
+        earse_params_len = len(erase_seal_params_list)
+        img_clean = erase_invoice_img_seal(img_cv, erase_seal_params_list[earse_params_len-1])
+        kernel = np.array([[0,-2,0],[-1,9,-1],[0,-2,0]])
+        img_enhanced = cv2.filter2D(img_clean, -1, kernel)
+        # cv2.imwrite("debug_img_enhanced.jpg", img_enhanced)
         results = ocr.predict(img_enhanced)
         
         texts  = results[0]['rec_texts']
