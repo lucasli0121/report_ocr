@@ -3,8 +3,9 @@ from typing import Any
 from dao.company_dao import CompanyDao
 from dao.service_record_dao import ServiceRecordDao
 from db.mydb import MyDb
+from utils.ocr_manager import OcrManager
 my_db = MyDb()
-
+ocr_mgr: OcrManager = OcrManager()
 
 def query_company_name_company() -> tuple[bool, dict[str, CompanyDao]]:
     result, list_values = my_db.query_all_company('','','','')

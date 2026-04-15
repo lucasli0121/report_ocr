@@ -1,12 +1,14 @@
 import asyncio
 import logging
-import os
-import grpc
-from concurrent import futures
 import logging.config
+import os
+import signal
+import sys
+import time
 import yaml
-from grpc_protoc.invoice_recognize_server import InvoiceRecognizeServicer
-from grpc_protoc import invoice_rpc_pb2_grpc
+from concurrent import futures
+from threading import Event
+import utils.global_vars as g
 
 def init_logger():
     cfg_path = 'cfg/log.yaml'
@@ -24,15 +26,39 @@ def init_logger():
             filemode="w",
         )
         
-async def serve():
-     server = grpc.aio.server(futures.ThreadPoolExecutor(max_workers=10))
-     invoice_rpc_pb2_grpc.add_InvoiceRpcServicer_to_server(InvoiceRecognizeServicer(), server)
-     server.add_insecure_port('[::]:50051')
-     print("Server running...")
-     await server.start()
-     await server.wait_for_termination()
+# async def serve():
+#      server = grpc.aio.server(futures.ThreadPoolExecutor(max_workers=10))
+#      invoice_rpc_pb2_grpc.add_InvoiceRpcServicer_to_server(InvoiceRecognizeServicer(), server)
+#      server.add_insecure_port('[::]:50051')
+#      print("Server running...")
+#      await server.start()
+#      await server.wait_for_termination()
+
+"""
+function: signalExit
+description: response signal such as SIGTERM, SIGINT
+return {*}
+"""
+exit_event = Event()
+
+def signalExit(a, b):
+    try:
+        logger.info("exit")
+        g.ocr_mgr.stop()
+        exit_event.set()
+    except Exception:
+        pass
 
 if __name__ in {"__main__", "__mp_main__"}:
     init_logger()
     logger = logging.getLogger(__name__)
-    asyncio.run(serve())
+    try:
+        signal.signal(signal.SIGTERM, signalExit)
+        signal.signal(signal.SIGINT, signalExit)
+        logger.info("OCR Manager started.")
+        g.ocr_mgr.start()
+        exit_event.wait()
+    except Exception as err:
+        logger.error(err)
+    except (KeyboardInterrupt, SystemExit):
+        pass

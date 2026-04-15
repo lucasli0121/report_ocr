@@ -25,3 +25,4 @@ pdf2image>=1.17.0
 opencv-python-headless
 grpcio>=1.76.0
 grpcio-tools>=1.76.0
+apscheduler

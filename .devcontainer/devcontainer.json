@@ -37,6 +37,13 @@
     //
     // 若采用 compose，请在 devcontainer.json 中引用：
     // 并移除或忽略 image/runArgs（根据需求）。
+    "forwardPorts": [8084],
+    "portsAttributes": {
+        "8084": {
+            "label": "NiceGUI App",
+            "onAutoForward": "notify"
+        }
+    },
     "customizations": {
         "vscode": {
             "extensions": [
