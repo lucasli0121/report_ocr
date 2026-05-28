@@ -5,13 +5,9 @@ from dataclasses import dataclass
 from dao.company_dao import CompanyDao
 from dao.invoice_record_dao import InvoiceRecordDao
 from dao.tax_approval_dao import TaxApprovalDao
+from recognize.recognize_result import InvoiceRecognizeResult
 from utils import global_vars as g
 
-@dataclass
-class InvoiceRecognizeResult:
-    result: int
-    msg: str
-    data: None|InvoiceRecordDao
 
 def parse_invoice_recognize_result_to_dao(result: list) -> InvoiceRecognizeResult:
     if result is None or len(result) == 0:
@@ -31,6 +27,16 @@ def parse_invoice_recognize_result_to_dao(result: list) -> InvoiceRecognizeResul
     dao = InvoiceRecordDao()
     dao.invoice_content = result[0].get('发票内容', '')
     dao.invoice_number = result[0].get('发票号码', '')
+    # 检查发票号码长度是否为20位
+    # 如果小于20位，再判断中间连续为0的字符串长度是否小于6位，如果小于6位则补一个0
+    if len(dao.invoice_number) != 20:
+        zero_str = '0' * 5
+        if zero_str in dao.invoice_number:
+            zero_index = dao.invoice_number.find(zero_str)
+            if zero_index != -1 and len(dao.invoice_number) - zero_index > 1:
+                dao.invoice_number = dao.invoice_number[:zero_index] + '0' + dao.invoice_number[zero_index:]
+    if len(dao.invoice_number) != 20:
+        return InvoiceRecognizeResult(result=-1, msg='发票号码识别错误，长度应为20', data=None)
     invoice_date_str = result[0].get('开票日期', '')
     if invoice_date_str != '':
         try:

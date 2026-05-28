@@ -3,8 +3,7 @@ import logging
 import time
 import requests
 import os
-from recognize.certificate_recognize import CertificateRecognizeResult, parse_certificate_result_to_dao, save_certificate_daos
-from recognize.invoice_recognize import InvoiceRecognizeResult, parse_invoice_recognize_result_to_dao, save_invoice_dao
+from recognize.recognize_result import CertificateRecognizeResult, InvoiceRecognizeResult
 from recognize.recognize_tools import recognize_certificate_pdf, recognize_invoice_pdf
 
 
@@ -17,6 +16,7 @@ class InvoiceRecognizeServicer():
         self.download_url = cp.get("download_server", "url")
 
     def invoice_recognize(self, file_name: str) -> InvoiceRecognizeResult:
+        from recognize.invoice_recognize import parse_invoice_recognize_result_to_dao, save_invoice_dao
         # Simulate invoice recognition logic
         self.logger.info(f"Received invoice recognition file: {file_name}")
         host_url = self.download_url + file_name
@@ -59,6 +59,7 @@ class InvoiceRecognizeServicer():
 
 
     def certificate_recognize(self, file_name: str) -> CertificateRecognizeResult:
+        from recognize.certificate_recognize import parse_certificate_result_to_dao, save_certificate_daos
         # Simulate invoice recognition logic
         self.logger.info(f"Received certificate recognition request for file: {file_name} ")
         host_url = self.download_url + file_name

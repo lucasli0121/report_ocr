@@ -13,15 +13,10 @@ from typing import Optional
 from dataclasses import dataclass
 from dao.company_dao import CompanyDao
 from dao.tax_approval_dao import TaxApprovalDao
+from recognize.recognize_result import CertificateRecognizeResult
 from utils import global_vars as g
 
 logger = logging.getLogger(__name__)
-
-@dataclass
-class CertificateRecognizeResult:
-    result: int
-    msg: str
-    data: None|list[TaxApprovalDao]
 
 def parse_certificate_result_to_dao(results: list) -> CertificateRecognizeResult:
     if results is None or len(results) == 0:

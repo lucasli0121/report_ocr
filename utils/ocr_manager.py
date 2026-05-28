@@ -10,8 +10,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.schedulers.blocking import BlockingScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 from grpc_protoc.invoice_recognize_server import InvoiceRecognizeServicer
-from recognize.certificate_recognize import CertificateRecognizeResult
-from recognize.invoice_recognize import InvoiceRecognizeResult
+from recognize.recognize_result import CertificateRecognizeResult, InvoiceRecognizeResult
 from utils import global_vars as g
 from dao.recognize_info_dao import RecognizeInfoDao, RecognizeResult, RecognizeType
 
