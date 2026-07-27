@@ -53,7 +53,7 @@ class InvoiceRecognizeServicer():
                     else:
                         self.logger.info(f"Invoice saved successfully with ID: {dao.id}")
         else:
-            self.logger.info("下载失败，状态码：", http_response.status_code)
+            self.logger.info(f"下载失败，状态码：{http_response.status_code}")
             return_response = InvoiceRecognizeResult(result=-1, msg="下载失败，状态码: {http_response.status_code}", data=None)
         return return_response
 

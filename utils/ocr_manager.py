@@ -1,6 +1,7 @@
 
 from dataclasses import asdict, dataclass, is_dataclass
 import json
+import logging
 import os
 from configparser import ConfigParser, NoOptionError, NoSectionError
 from typing import Any
@@ -31,6 +32,7 @@ class OcrManager:
     def __init__(self) -> None:
         self.scheduler = BackgroundScheduler(timezone="Asia/Shanghai")
         self._is_running = False
+        self.logger = logging.getLogger(__name__)
 
     def start(self):
         if self._is_running:
