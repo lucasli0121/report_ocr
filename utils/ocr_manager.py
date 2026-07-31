@@ -26,13 +26,14 @@ class EventObj:
 
 class OcrManager:
     scheduler: BackgroundScheduler
-    recognize_servere: InvoiceRecognizeServicer = InvoiceRecognizeServicer()
+    recognize_servere: InvoiceRecognizeServicer
     _is_running: bool = False
     
     def __init__(self) -> None:
-        self.scheduler = BackgroundScheduler(timezone="Asia/Shanghai")
-        self._is_running = False
         self.logger = logging.getLogger(__name__)
+        self.scheduler = BackgroundScheduler(timezone="Asia/Shanghai")
+        self.recognize_servere = InvoiceRecognizeServicer()
+        self._is_running = False
 
     def start(self):
         if self._is_running:
