@@ -1,5 +1,6 @@
 
 from datetime import datetime
+import logging
 from typing import Optional
 from dataclasses import dataclass
 from dao.company_dao import CompanyDao
@@ -106,7 +107,7 @@ def parse_invoice_recognize_result_to_dao(result: list) -> InvoiceRecognizeResul
         dao.status = 3 # 已红冲
     return InvoiceRecognizeResult(result=0, msg='成功', data=dao)
 
-def save_invoice_dao(dao: InvoiceRecordDao) -> InvoiceRecognizeResult:
+def save_invoice_dao(dao: InvoiceRecordDao, logger: logging.Logger) -> InvoiceRecognizeResult:
     res, record_list = g.my_db.query_duplicate_invoice_record(dao.from_company_id, dao.to_company_id, dao.invoice_number, dao.invoice_time, dao.invoice_content)
     if res and record_list is not None and len(record_list) > 0:
         return InvoiceRecognizeResult(result=-1, msg=f'发票 "{dao.invoice_number}" 已存在，不能重复上传', data=None)
@@ -121,6 +122,8 @@ def save_invoice_dao(dao: InvoiceRecordDao) -> InvoiceRecognizeResult:
             blue_dao.status = 2 # 已作废
             if not g.my_db.update_invoice_record(blue_dao.to_db(), {'id': blue_dao.id}):
                 return InvoiceRecognizeResult(result=-1, msg='更新蓝字发票状态失败', data=None)
+        else:
+            logger.error(f"冲红发票没有找到对应的蓝字发票，冲红发票号码{dao.invoice_number},蓝字号码{dao.blue_invoice_number}")
     if id is not None:
         dao.id = id
     return InvoiceRecognizeResult(result=0, msg='保存发票信息成功', data=None)

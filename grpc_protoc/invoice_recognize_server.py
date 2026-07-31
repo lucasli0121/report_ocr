@@ -47,7 +47,7 @@ class InvoiceRecognizeServicer():
                 self.logger.info(f"Downloaded file saved to: {save_file}")
                 dao = return_response.data
                 if dao is not None:
-                    return_response = save_invoice_dao(dao)
+                    return_response = save_invoice_dao(dao, self.logger)
                     if return_response.result != 0:
                         self.logger.info(f"Saving invoice failed: {return_response.msg}")
                     else:
