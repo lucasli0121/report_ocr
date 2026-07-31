@@ -8,7 +8,9 @@ import time
 import yaml
 from concurrent import futures
 from threading import Event
+from db.mydb import MyDb
 import utils.global_vars as g
+from utils.ocr_manager import OcrManager
 
 def init_logger():
     cfg_path = 'cfg/log.yaml'
@@ -52,6 +54,8 @@ def signalExit(a, b):
 if __name__ in {"__main__", "__mp_main__"}:
     init_logger()
     logger = logging.getLogger(__name__)
+    g.my_db = MyDb()
+    g.ocr_mgr = OcrManager()
     try:
         signal.signal(signal.SIGTERM, signalExit)
         signal.signal(signal.SIGINT, signalExit)

@@ -32,7 +32,10 @@ class MongoImpl(DbBaseImpl):
 
     def __del__(self):
         if self.conn is not None:
-            self.conn.close()
+            try:
+                self.conn.close()
+            except Exception:
+                pass  # Python 关闭阶段 import 系统可能已销毁
 
 
     # 公司银行账户表名
